@@ -5,7 +5,7 @@
 int main() {
     RegExpSearchHit hit;
 
-    char* str = "Check this code 2244";
+    char* str = "Check this code: 2244";
     char* regexp = "code:? \\d\\d\\d\\d";
 
     int hits = RegExp_search(regexp, str, &hit);

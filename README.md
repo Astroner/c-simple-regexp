@@ -1,15 +1,19 @@
 # Hi there
 This is just a simple C RegExp implementation.
 
+# Usage
+This repo provide STB like lib *RegExpLib.h*, U can just download it and include to ur project.
+Do not forget to define REGEXP_LIB_IMPLEMENTATION before **include** statement to get the implementation.
+
 # Supported tokens
- - '.' - any character (except \n, \r etc)
- - '\w' - any word character
- - '\w' - any word character
- - '\s' - any white space character
- - '^' - start of the line
- - '$' - end of the line
- - '\' - makes any character literal
- - '?' - makes previous token optional
+ - *.* - any character (except \n, \r etc)
+ - *\w* - any word character
+ - *\w* - any word character
+ - *\s* - any white space character
+ - *^* - start of the line
+ - *$* - end of the line
+ - *\\* - makes any character literal
+ - *?* - makes previous token optional
 
 # Functions
 ## RegExp_search
@@ -31,7 +35,8 @@ Example:
 ```c
 #include <stdio.h>
 
-#include "RegExp.h"
+#define REGEXP_LIB_IMPLEMENTATION
+#include "RegExpLib.h"
 
 int main() {
     RegExpSearchHit hit;
