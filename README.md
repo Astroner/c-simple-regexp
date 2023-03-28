@@ -8,7 +8,7 @@ Do not forget to define **REGEXP_LIB_IMPLEMENTATION** before **include** stateme
 # Supported tokens
  - **.** - any character (except \n, \r etc)
  - **\w** - any word character
- - **\w** - any word character
+ - **\d** - any digit
  - **\s** - any white space character
  - **^** - start of the line
  - **$** - end of the line
