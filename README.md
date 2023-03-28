@@ -3,7 +3,7 @@ This is just a simple C RegExp implementation.
 
 # Usage
 This repo provide STB like lib *RegExpLib.h*, U can just download it and include to ur project.
-Do not forget to define REGEXP_LIB_IMPLEMENTATION before **include** statement to get the implementation.
+Do not forget to define **REGEXP_LIB_IMPLEMENTATION** before **include** statement to get the implementation.
 
 # Supported tokens
  - *.* - any character (except \n, \r etc)
