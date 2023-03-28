@@ -1,5 +1,5 @@
 # Hi there
-This is just a simle C RegExp implementation.
+This is just a simple C RegExp implementation.
 
 # Supported tokens
  - '.' - any character (except \n, \r etc)
