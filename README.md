@@ -6,14 +6,14 @@ This repo provide STB like lib *RegExpLib.h*, U can just download it and include
 Do not forget to define **REGEXP_LIB_IMPLEMENTATION** before **include** statement to get the implementation.
 
 # Supported tokens
- - *.* - any character (except \n, \r etc)
- - *\w* - any word character
- - *\w* - any word character
- - *\s* - any white space character
- - *^* - start of the line
- - *$* - end of the line
- - *\\* - makes any character literal
- - *?* - makes previous token optional
+ - **.** - any character (except \n, \r etc)
+ - **\w** - any word character
+ - **\w** - any word character
+ - **\s** - any white space character
+ - **^** - start of the line
+ - **$** - end of the line
+ - **\\** - makes any character literal
+ - **?** - makes previous token optional
 
 # Functions
 ## RegExp_search
