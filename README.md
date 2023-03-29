@@ -2,7 +2,7 @@
 This is just a simple C RegExp implementation.
 
 # Usage
-This repo provide STB like lib *RegExpLib.h*, U can just download it and include to ur project.
+This repo provide STB like lib *RegExpLib.h*, U can just download it and include into ur project.
 Do not forget to define **REGEXP_LIB_IMPLEMENTATION** before **include** statement to get the implementation.
 
 # Supported tokens
