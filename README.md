@@ -49,11 +49,13 @@ int main() {
     printf("Hits: %d\n", hits);
     printf("Start: %zu\n", hit.start);
     printf("Length: %zu\n", hit.length);
-    printf("Match: '");
-    for(size_t i = hit.start; i < hit.start + hit.length; i++) {
-        printf("%c", str[i]);
+    if(hits > 0) {
+        printf("Match: '");
+        for(size_t i = hit.start; i < hit.start + hit.length; i++) {
+            printf("%c", str[i]);
+        }
+        printf("'\n");
     }
-    printf("'\n");
 
     // Output:
     // Hits: 1
