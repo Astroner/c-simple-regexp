@@ -3,19 +3,82 @@
 
 #include <stdlib.h>
 
+#if defined(REGEXP_PRINT_COMPILATION_STATUSES)
+    #include <stdio.h>
+    #define RegExp_createStatic(name, regexp, patternsCount)\
+        Pattern name##__buffer[patternsCount];\
+        RegExp name##__data = {\
+            .patternsBuffer = name##__buffer,\
+            .patternsBufferSize = patternsCount,\
+        };\
+        RegExp* name = &name##__data;\
+        RegExpResult name##__status = RegExp_compile(regexp, name);\
+        if(name##__status == RegExpResultInsufficientSpace) {\
+            fprintf(stderr, "Not enough space for regexp '%s', provided size: %zu\n", regexp, (size_t)patternsCount);\
+        } else if(name##__status == RegExpResultSyntaxError) {\
+            fprintf(stderr, "Syntax error in regexp '%s'\n", regexp);\
+        }
+#else
+    #define RegExp_createStatic(name, regexp, patternsCount)\
+        Pattern name##__buffer[patternsCount];\
+        RegExp name##__data = {\
+            .patternsBuffer = name##__buffer,\
+            .patternsBufferSize = patternsCount,\
+        };\
+        RegExp* name = &name##__data;\
+        RegExp_compile(regexp, name);
+#endif
+
+
+typedef enum RegExpResult {
+    RegExpResultHits = 1,
+    RegExpResultEmpty = 0,
+    RegExpResultSyntaxError = -1,
+    RegExpResultInsufficientSpace = -2,
+} RegExpResult;
+
+typedef enum PatternType {
+    PatternTypeCharacter,
+    PatternTypeAnyCharacter,
+    PatternTypeWordCharacter,
+    PatternTypeDigit,
+    PatternTypeLineStart,
+    PatternTypeLineEnd,
+    PatternTypeSpaceCharacter,
+} PatternType;
+
+typedef struct Pattern {
+    PatternType type;
+    int optional;
+    int transparent;
+    union PatternPayload {
+        char character;
+    } payload;
+} Pattern;
+
+typedef struct RegExp {
+    RegExpResult errorStatus;
+    Pattern* patternsBuffer;
+    size_t patternsBufferSize;
+    size_t patternsActualSize;
+} RegExp;
+
 typedef struct RegExpSearchHit {
     size_t start;
     size_t length;
 } RegExpSearchHit; 
 
-#define SEARCH_HITS 1
-#define SEARCH_EMPTY 0
-#define SEARCH_SYNTAX_ERROR -1
-
-int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result);
+RegExpResult RegExp_compile(const char* regexp, RegExp* result);
+RegExpResult RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result);
+RegExp* RegExp_create(const char* regexp);
+void RegExp_free(RegExp*);
+void RegExp_printExpression(const RegExp* regexp);
 
 #endif // REGEXP_H
 #if defined(REGEXP_LIB_IMPLEMENTATION)
+
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef enum CharCode {
     CharCodeSpace = 32,
@@ -39,26 +102,7 @@ typedef enum CharCode {
     CharCodeS = 115,
 } CharCode;
 
-typedef enum PatternType {
-    PatternTypeCharacter,
-    PatternTypeAnyCharacter,
-    PatternTypeWordCharacter,
-    PatternTypeDigit,
-    PatternTypeLineStart,
-    PatternTypeLineEnd,
-    PatternTypeSpaceCharacter,
-} PatternType;
-
-typedef struct Pattern {
-    PatternType type;
-    int optional;
-    int transparent;
-    union PatternPayload {
-        char character;
-    } payload;
-} Pattern;
-
-size_t identifyPattern(const char* regexp, Pattern* result) {
+static size_t identifyPattern(const char* regexp, Pattern* result) {
     result->optional = 0;
     result->transparent = 0;
     result->type = 0;
@@ -118,6 +162,91 @@ size_t identifyPattern(const char* regexp, Pattern* result) {
     return length;
 }
 
+size_t getPatternsNumber(const char* regexp) {
+    size_t cursor = 0;
+
+    size_t patternIndex = 0;
+    Pattern pattern;
+    Pattern* patternPtr = &pattern;
+    while(regexp[cursor]) {
+        size_t patternLength = identifyPattern(regexp + cursor, patternPtr);
+
+        if(!patternLength) {
+            return 0;
+        }
+        patternIndex++;
+        cursor += patternLength;
+    }
+
+    return patternIndex;
+}
+
+RegExpResult RegExp_compile(const char* regexp, RegExp* result) {
+    size_t cursor = 0;
+
+    size_t patternIndex = 0;
+    while(regexp[cursor]) {
+        if(patternIndex == result->patternsBufferSize) {
+            result->errorStatus = RegExpResultInsufficientSpace;
+            return RegExpResultInsufficientSpace;
+        }
+
+        size_t patternLength = identifyPattern(regexp + cursor, result->patternsBuffer + patternIndex);
+
+        if(!patternLength) {
+            result->errorStatus = RegExpResultSyntaxError;
+            return RegExpResultSyntaxError;
+        }
+        patternIndex++;
+        cursor += patternLength;
+    }
+
+    result->patternsActualSize = patternIndex;
+    result->errorStatus = 0;
+
+    return RegExpResultHits;
+}
+
+RegExp* RegExp_create(const char* regexp) {
+    size_t size = getPatternsNumber(regexp);
+
+    if(!size) {
+        #if defined(REGEXP_PRINT_COMPILATION_STATUSES) 
+            fprintf(stderr, "Syntax error in '%s'\n", regexp);
+        #endif
+
+        RegExp* result = malloc(sizeof(RegExp));
+        result->errorStatus = RegExpResultSyntaxError;
+        result->patternsBufferSize = 0;
+        result->patternsActualSize = 0;
+
+        return result;
+    }
+
+    char* memory = malloc(sizeof(RegExp) + sizeof(Pattern) * size);
+
+    if(!memory) {
+        #if defined(REGEXP_PRINT_COMPILATION_STATUSES) 
+            fprintf(stderr, "Failed to allocate memory for regexp '%s'\n", regexp);
+        #endif
+        return NULL;
+    }
+
+    RegExp* result = (void*)memory;
+    Pattern* buffer = (Pattern*)(memory + sizeof(RegExp));
+
+    result->patternsBuffer = buffer;
+    result->patternsBufferSize = size;
+
+    RegExp_compile(regexp, result);
+
+    return result;
+}
+
+void RegExp_free(RegExp* regexp) {
+    free(regexp);
+}
+
 int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) {
 
     size_t start = 0;
@@ -133,7 +262,7 @@ int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) 
             size_t patternLength = identifyPattern(regexp + regexpCursor, &pattern);
 
             if(!patternLength) {
-                return SEARCH_SYNTAX_ERROR;
+                return RegExpResultSyntaxError;
             }
         
             char stringChar = str[start + stringCursor];
@@ -147,9 +276,9 @@ int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) 
                         result->start = start;
                         result->length = stringCursor;
                     }
-                    return SEARCH_HITS;
+                    return RegExpResultHits;
                 }
-                return SEARCH_EMPTY;
+                return RegExpResultEmpty;
             }
 
             int matches = 0;
@@ -183,7 +312,7 @@ int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) 
                     break;
 
                 case PatternTypeLineStart:
-                    if(start > 0 || regexpCursor > 0) return SEARCH_EMPTY;
+                    if(start > 0 || regexpCursor > 0) return RegExpResultEmpty;
                     matches = 1;
                     break;
 
@@ -210,9 +339,41 @@ int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) 
                 result->start = start;
                 result->length = stringCursor;
             }
-            return SEARCH_HITS;
+            return RegExpResultHits;
         }      
     }
-    return SEARCH_EMPTY;
+    return RegExpResultEmpty;
 }
+
+void RegExp_printExpression(const RegExp* regexp) {
+    for(size_t i = 0; i < regexp->patternsActualSize; i++) {
+        Pattern pattern = regexp->patternsBuffer[i];
+        fprintf(stdout, "%zu) ", i + 1);
+        switch(pattern.type) {
+            case PatternTypeCharacter:
+                fprintf(stdout, "%c - Literal\n", pattern.payload.character);
+                break;
+            case PatternTypeAnyCharacter:
+                fprintf(stdout, ". - Any character\n");
+                break;
+            case PatternTypeDigit:
+                fprintf(stdout, "\\d - Any digit\n");
+                break;
+            case PatternTypeLineStart:
+                fprintf(stdout, "^ - Start of the line\n");
+                break;
+            case PatternTypeLineEnd:
+                fprintf(stdout, "$ - End of the line\n");
+                break;
+            case PatternTypeWordCharacter:
+                fprintf(stdout, "\\w - Any word character\n");
+                break;
+            case PatternTypeSpaceCharacter:
+                fprintf(stdout, "\\s - Any white space character\n");
+                break;
+        }
+    }
+    fprintf(stdout, "Patterns number: %zu; Buffer size: %zu\n", regexp->patternsActualSize, regexp->patternsBufferSize);
+}
+
 #endif // REGEXP_LIB_IMPLEMENTATION

@@ -13,7 +13,7 @@ all: build
 build: $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(EXECUTABLE) $^
 
-lib:
+lib: headers/RegExp.h sources/RegExp.c
 	cat headers/RegExp.h > $(LIB_NAME)
 	echo "#if defined(REGEXP_LIB_IMPLEMENTATION)" >> $(LIB_NAME)
 	tail -n +2 sources/RegExp.c >> $(LIB_NAME)
