@@ -85,7 +85,7 @@ static size_t identifyPattern(const char* regexp, Pattern* result) {
     return length;
 }
 
-size_t getPatternsNumber(const char* regexp) {
+static size_t getPatternsNumber(const char* regexp) {
     size_t cursor = 0;
 
     size_t patternIndex = 0;
@@ -106,6 +106,7 @@ size_t getPatternsNumber(const char* regexp) {
 
 RegExpResult RegExp_compile(const char* regexp, RegExp* result) {
     size_t cursor = 0;
+    size_t minPossibleLength = 0;
 
     size_t patternIndex = 0;
     while(regexp[cursor]) {
@@ -114,11 +115,15 @@ RegExpResult RegExp_compile(const char* regexp, RegExp* result) {
             return RegExpResultInsufficientSpace;
         }
 
-        size_t patternLength = identifyPattern(regexp + cursor, result->patternsBuffer + patternIndex);
+        Pattern* pattern = result->patternsBuffer + patternIndex;
+        size_t patternLength = identifyPattern(regexp + cursor, pattern);
 
         if(!patternLength) {
             result->errorStatus = RegExpResultSyntaxError;
             return RegExpResultSyntaxError;
+        }
+        if(!pattern->optional && !pattern->transparent) {
+            minPossibleLength++;
         }
         patternIndex++;
         cursor += patternLength;
@@ -126,6 +131,7 @@ RegExpResult RegExp_compile(const char* regexp, RegExp* result) {
 
     result->patternsActualSize = patternIndex;
     result->errorStatus = 0;
+    result->minPossibleLength = minPossibleLength;
 
     return RegExpResultHits;
 }
@@ -170,132 +176,109 @@ void RegExp_free(RegExp* regexp) {
     free(regexp);
 }
 
-int RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result) {
+RegExpResult RegExp_search(const RegExp* regexp, const char* str, RegExpSearchHit* result) {
+    // Check for errors in RegExp
+    if(regexp->errorStatus < 0) return regexp->errorStatus;
 
     size_t start = 0;
-    while(str[start]) {
-
-        size_t regexpCursor = 0;
-        size_t stringCursor = 0;
-
+    // we are iterating the string while it is possible for the substring to fit into the space left
+    // but if the string length is less then minPossibleLength then we will try to check bytes out of the string bounds and we cannot avoid this behavior
+    // coz we cant just get length of the string without iteration over the whole string
+    // so we have to additionally check current starting char to be not NUL TERMINATOR 
+    // it is kinda not a good practice, because in the scenario where string length less then minPossibleLength we will make full iteration
+    while(str[start + regexp->minPossibleLength - 1] && str[start]) {
+        printf("A\n");
         int hits = 1;
 
-        while(regexp[regexpCursor]) {
-            Pattern pattern;
-            size_t patternLength = identifyPattern(regexp + regexpCursor, &pattern);
+        size_t regexpCursor = 0; // regexp pattern index
+        size_t stringCursor = 0; // string char index. Should be separated from regexpCursor, coz 1 pattern != 1 char.
+        while(regexpCursor < regexp->patternsActualSize) {
+            Pattern pattern = regexp->patternsBuffer[regexpCursor];
+            char ch = str[start + stringCursor];
 
-            if(!patternLength) {
-                return RegExpResultSyntaxError;
-            }
-        
-            char stringChar = str[start + stringCursor];
-            if(!stringChar) {
-                if(
-                    !regexp[regexpCursor + patternLength] // last regexp pattern
-                    &&
-                    (pattern.optional || pattern.type == PatternTypeLineEnd)
-                ) {
-                    if(result) {
-                        result->start = start;
-                        result->length = stringCursor;
-                    }
-                    return RegExpResultHits;
-                }
-                return RegExpResultEmpty;
-            }
+            int isLastPattern = regexpCursor + 1 == regexp->patternsActualSize;
+            int isEndOfTheString = !ch;
+
+            // if it is the last pattern and it is optional then we dont need to even handle it, it is auto match
+            if(isLastPattern && pattern.optional) break;
 
             int matches = 0;
+
             switch(pattern.type) {
-                case PatternTypeCharacter:
-                    matches = stringChar == pattern.payload.character;
+                case PatternTypeAnyCharacter:
+                    matches = ch != CharCodeNL && ch != CharCodeCR;
                     break;
 
-                case PatternTypeAnyCharacter:
-                    matches = stringChar != CharCodeNL && stringChar != CharCodeCR;
+                case PatternTypeCharacter:
+                    matches = ch == pattern.payload.character;
                     break;
 
                 case PatternTypeDigit:
-                    matches = (stringChar >= CharCode0) && (stringChar <= CharCode9);
+                    matches = ch >= CharCode0 && ch <=CharCode9;
                     break;
-                
+
                 case PatternTypeWordCharacter:
                     matches = (
-                        (stringChar >= CharCodeCapitalA && stringChar <= CharCodeCapitalZ)
-                        ||
-                        (stringChar >= CharCodeA && stringChar <= CharCodeZ)
+                        (ch >= CharCodeA && ch <= CharCodeZ)
+                        || 
+                        (ch >= CharCodeCapitalA && ch <= CharCodeCapitalZ)
                     );
                     break;
 
                 case PatternTypeSpaceCharacter:
-                    matches = (
-                        stringChar == CharCodeNL
-                        || stringChar == CharCodeSpace 
-                        || stringChar == CharCodeTab
-                    );
+                    matches = ch == CharCodeSpace || ch == CharCodeTab;
+                    break;
+
+                case PatternTypeLineEnd:
+                    matches = isEndOfTheString && isLastPattern;
                     break;
 
                 case PatternTypeLineStart:
                     if(start > 0 || regexpCursor > 0) return RegExpResultEmpty;
                     matches = 1;
                     break;
-
-                case PatternTypeLineEnd:
-                    matches = !str[start + stringCursor + 1];
-                    break;
             }
-
-            regexpCursor += patternLength;
-            if(matches) {
-                if(!pattern.transparent) {
+            
+            if(matches) { // if pattern matches char
+                // then we go to the next pattern
+                regexpCursor++;
+                
+                // end move to the next char unless pattern is transparent(^ for example) and it is end of the string.
+                if(!pattern.transparent && !isEndOfTheString) {
                     stringCursor++;
                 }
-            } else if(!pattern.optional) {
-                hits = 0;
-                break;
+            } else { // if it doesn't match
+                if(pattern.optional) { // if pattern is optional (?)
+                    regexpCursor++; // then we just move to the next pattern and dont move stringCursor
+                } else { // if it is not optional we need to move to the next substring
+                    hits = 0;
+                    break;
+                }
+            }
+
+            // now we need to handle end of the string
+            if(isEndOfTheString) {
+                // we only can get here if the pattern matches
+                if(isLastPattern) {
+                    break;
+                } else {
+                    if(!pattern.optional) {
+                        return RegExpResultEmpty;
+                    }
+                }
             }
         }
-
-        if(!hits) {
-            start++;
-        } else {
+        if(hits) {
             if(result) {
                 result->start = start;
                 result->length = stringCursor;
             }
             return RegExpResultHits;
-        }      
-    }
-    return RegExpResultEmpty;
-}
-
-void RegExp_printExpression(const RegExp* regexp) {
-    for(size_t i = 0; i < regexp->patternsActualSize; i++) {
-        Pattern pattern = regexp->patternsBuffer[i];
-        fprintf(stdout, "%zu) ", i + 1);
-        switch(pattern.type) {
-            case PatternTypeCharacter:
-                fprintf(stdout, "%c - Literal\n", pattern.payload.character);
-                break;
-            case PatternTypeAnyCharacter:
-                fprintf(stdout, ". - Any character\n");
-                break;
-            case PatternTypeDigit:
-                fprintf(stdout, "\\d - Any digit\n");
-                break;
-            case PatternTypeLineStart:
-                fprintf(stdout, "^ - Start of the line\n");
-                break;
-            case PatternTypeLineEnd:
-                fprintf(stdout, "$ - End of the line\n");
-                break;
-            case PatternTypeWordCharacter:
-                fprintf(stdout, "\\w - Any word character\n");
-                break;
-            case PatternTypeSpaceCharacter:
-                fprintf(stdout, "\\s - Any white space character\n");
-                break;
+        } else {
+            start++;
         }
     }
-    fprintf(stdout, "Patterns number: %zu; Buffer size: %zu\n", regexp->patternsActualSize, regexp->patternsBufferSize);
+
+    return RegExpResultEmpty;
 }
 

@@ -61,6 +61,7 @@ typedef struct RegExp {
     Pattern* patternsBuffer;
     size_t patternsBufferSize;
     size_t patternsActualSize;
+    size_t minPossibleLength;
 } RegExp;
 
 typedef struct RegExpSearchHit {
@@ -69,9 +70,14 @@ typedef struct RegExpSearchHit {
 } RegExpSearchHit; 
 
 RegExpResult RegExp_compile(const char* regexp, RegExp* result);
-RegExpResult RegExp_search(const char* regexp, const char* str, RegExpSearchHit* result);
+RegExpResult RegExp_searchRaw(const char* regexp, const char* str, RegExpSearchHit* result);
+RegExpResult RegExp_search(const RegExp* regexp, const char* str, RegExpSearchHit* result);
+void RegExp_printSearchHit(const char* string, const RegExpSearchHit* hit);
+void RegExp_printlnSearchHit(const char* string, const RegExpSearchHit* hit);
+
 RegExp* RegExp_create(const char* regexp);
 void RegExp_free(RegExp*);
+
 void RegExp_printExpression(const RegExp* regexp);
 
 #endif // REGEXP_H
