@@ -10,6 +10,8 @@ This is just a simple C RegExp implementation.
          - [Static with macro](#static-with-macro)
          - [Dynamic with function](#dynamic-with-function)
          - [Manual way](#manual-way)
+     - [Search](#search)
+     - [Additional functions](#additional-functions)
  - [Refs](#refs)
 
 # Include to your project
@@ -37,8 +39,8 @@ This lib provides 3 basic structures:
      - **RegExpResultSyntaxError** - syntax error during regexp compilation
      - **RegExpResultInsufficientSpace** - not enough space during static compilation
  - **RegExpSearchHit** - represents search hit. Contains 2 fields:
-     - **start** - start of the substring
-     - **length** - length of the substring
+     - **start** - **size_t** - start of the substring
+     - **length** - **size_t** - length of the substring
 
 ## Create RegExp
 At first you need to create RegExp and compile it. Basically, you have 3 ways to do so:
@@ -180,5 +182,98 @@ int main(void) {
 }
 ```
 Interesting thing is that **RegExp_patternsNumber()** and **RegExp_compile()** actually uses the same pattern identification function under the hood, so if **RegExp_patternsNumber()** don't throw SyntaxError then **RegExp_compile()** also will not throw SyntaxError. Downside of this precise approach is that we need to go through the regexp string twice: to get length and to compile. We use this approach in **RegExp_create()** function, so it is always slower then **RegExp_createStatic()** even besides **malloc()** and **free()** calls.
+
+## Search
+To find substring using **RegExp** you can use function **RegExp_search()**.
+```c
+RegExpResult RegExp_search(const RegExp* expression, const char* string, RegExpSearchHit* result);
+```
+**result** argument is optional in case if you just want to test the string and don't need the matching substring.
+
+Example:
+```c
+#include <stdio.h>
+
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
+
+int main(void) {
+    RegExp* expression = RegExp_create("...$");
+
+    RegExpSearchHit hit;
+    RegExpResult hits = RegExp_search(expression, "abcdefg", &hit);
+
+    if(hits) {
+        printf("Start: %zu\n", hit.start); // Start: 4
+        printf("Length: %zu\n", hit.length); // Length: 3
+    } else {
+        printf("Miss\n");
+    }
+
+    RegExp_free(expression);
+
+    return 0;
+}
+```
+If you want to print the matching substring you can use **RegExp_printSearchHit()** function or **RegExp_printlnSearchHit()** function:
+```c
+#include <stdio.h>
+
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
+
+int main(void) {
+    RegExp* expression = RegExp_create("...$");
+
+    char* string = "abcdefg";
+
+    RegExpSearchHit hit;
+    RegExpResult hits = RegExp_search(expression, string, &hit);
+
+    if(hits) {
+        RegExp_printlnSearchHit(string, &hit); // efg
+    } else {
+        printf("Miss\n");
+    }
+
+    RegExp_free(expression);
+
+    return 0;
+}
+```
+## Additional functions
+### RegExp_printExpression
+Prints parsed **RegExp**.
+
+Interface:
+```c
+void RegExp_printExpression(const RegExp* expression);
+```
+Example:
+```c
+#include <stdio.h>
+
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
+
+int main(void) {
+    RegExp* expression = RegExp_create("...$");
+
+    RegExp_printExpression(expression);
+
+    RegExp_free(expression);
+
+    return 0;
+}
+```
+Result:
+> 1) . - Any character
+> 2) . - Any character
+> 3) . - Any character
+> 4) $ - End of the line (Transparent)
+> Minimal Possible Length: 3
+> Patterns number: 4; Buffer size: 4
+
+
 # Refs
  - [ASCII codes](https://www.cs.cmu.edu/~pattis/15-1XX/common/handouts/ascii.html)
