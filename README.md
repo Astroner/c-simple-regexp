@@ -135,11 +135,11 @@ int main(void) {
 
     RegExpResult result = RegExp_compile(&expression, "word");
     
-    if(expression->errorStatus < 0) {
+    if(expression.errorStatus < 0) {
         printf("Got error during the compilation: ");
-        if(expression->errorStatus == RegExpResultInsufficientSpace) {
+        if(expression.errorStatus == RegExpResultInsufficientSpace) {
             printf("Insufficient Buffer Space\n");
-        } else if(expression->errorStatus == RegExpResultSyntaxError) {
+        } else if(expression.errorStatus == RegExpResultSyntaxError) {
             printf("Syntax Error\n");
         }
         return 1;
