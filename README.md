@@ -150,7 +150,7 @@ int main(void) {
 ```
 Here you can control memory and etc on your own.
 
-If for some reasons you don't want to use **RegExp_create()** functions to create **RegExp** in the dynamic memory, then you also can do it in manual way.
+If for some reasons you don't want to use **RegExp_create()** function to create **RegExp** in the dynamic memory, then you also can do it in manual way.
 If you want to allocate precise amount of memory you can use **RegExp_patternsNumber()** function to get number of patterns in the regexp.
 ```c
 #include <stdio.h>
