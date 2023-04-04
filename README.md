@@ -54,6 +54,8 @@ or you can check them by yourself with **errorStatus** field.
 
 Example:
 ```c
+#include <stdio.h>
+
 #define REGEXP_IMPLEMENTATION
 #define REGEXP_PRINT_COMPILATION_STATUSES
 #include "RegExp.h"
@@ -81,6 +83,8 @@ or you can check them by yourself with **errorStatus** field.
 
 Example:
 ```c
+#include <stdio.h>
+
 #define REGEXP_IMPLEMENTATION
 #define REGEXP_PRINT_COMPILATION_STATUSES
 #include "RegExp.h"
