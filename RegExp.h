@@ -80,7 +80,7 @@ void RegExp_free(RegExp*);
 void RegExp_printExpression(const RegExp* regexp);
 
 #endif // REGEXP_H
-#if defined(REGEXP_LIB_IMPLEMENTATION)
+#if defined(REGEXP_IMPLEMENTATION)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -417,4 +417,4 @@ void RegExp_printExpression(const RegExp* regexp) {
     fprintf(stdout, "Patterns number: %zu; Buffer size: %zu\n", regexp->patternsActualSize, regexp->patternsBufferSize);
 }
 
-#endif // REGEXP_LIB_IMPLEMENTATION
+#endif // REGEXP_IMPLEMENTATION

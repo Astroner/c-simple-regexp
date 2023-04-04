@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #define REGEXP_CHECK_COMPILATION_STATUSES
-#define REGEXP_LIB_IMPLEMENTATION
-#include "RegExpLib.h"
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
 
 void staticRegExpWorks() {
     RegExp_createStatic(normal, "...", 3);
