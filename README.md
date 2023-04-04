@@ -9,6 +9,7 @@ This is just a simple C RegExp implementation.
      - [Create RegExp](#create-regexp)
          - [Static with macro](#static-with-macro)
          - [Dynamic with function](#dynamic-with-function)
+         - [Manual way](#manual-way)
  - [Refs](#refs)
 
 # Include to your project
