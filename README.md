@@ -12,6 +12,7 @@ This is just a simple C RegExp implementation.
          - [Manual way](#manual-way)
      - [Search](#search)
      - [Additional functions](#additional-functions)
+         - [RegExp_printExpression](#regexp_printexpression)
  - [Refs](#refs)
 
 # Include to your project
@@ -260,19 +261,19 @@ int main(void) {
     RegExp* expression = RegExp_create("...$");
 
     RegExp_printExpression(expression);
+    // Output
+    // 1) . - Any character
+    // 2) . - Any character
+    // 3) . - Any character
+    // 4) $ - End of the line (Transparent)
+    // Minimal Possible Length: 3
+    // Patterns number: 4; Buffer size: 4
 
     RegExp_free(expression);
 
     return 0;
 }
 ```
-Result:
-> 1) . - Any character
-> 2) . - Any character
-> 3) . - Any character
-> 4) $ - End of the line (Transparent)
-> Minimal Possible Length: 3
-> Patterns number: 4; Buffer size: 4
 
 
 # Refs
