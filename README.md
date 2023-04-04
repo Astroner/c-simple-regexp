@@ -74,8 +74,8 @@ int main(void) {
 }
 ```
 ### Dynamic with function
-This lib provide **RegExp* RegExp_create(const char* regexp)** function to dynamically create regexp.
-To free created regexp you can use **void RegExp_free(RegExp*)** function.
+This lib provide **RegExp* RegExp_create(const char\* regexp)** function to dynamically create regexp.
+To free created regexp you can use **void RegExp_free(RegExp\*)** function.
 If you want to get compilation errors into the console, you need to define **REGEXP_PRINT_COMPILATION_STATUSES** before **include** statement
 or you can check them by yourself with **errorStatus** field.
 
