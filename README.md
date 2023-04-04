@@ -29,7 +29,7 @@ Do not forget to define **REGEXP_IMPLEMENTATION** before **include** statement t
 ## Structs
 This lib provides 3 basic structures:
  - **RegExp** - regular expression. Useful fields:
-     - **errorStatus** - RegExpResult - provides error information during the compilation.
+     - **errorStatus** - **RegExpResult** - provides error information during the compilation.
  - **RegExpResult** - enum containing various results:
      - **RegExpResultEmpty** - nothing is found
      - **RegExpResultHits** - found something
