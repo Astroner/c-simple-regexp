@@ -48,8 +48,10 @@ Args:
  - **name** - RegExp name
  - **regexp** - regexp string
  - **patternsNumber** - buffer size for the regexp
+
 If you want to get compilation errors into the console, you need to define **REGEXP_PRINT_COMPILATION_STATUSES** before **include** statement
 or you can check them by yourself with **errorStatus** field.
+
 Example:
 ```c
 #define REGEXP_IMPLEMENTATION
@@ -76,6 +78,7 @@ This lib provide **RegExp* RegExp_create(const char* regexp)** function to dynam
 To free created regexp you can use **void RegExp_free(RegExp*)** function.
 If you want to get compilation errors into the console, you need to define **REGEXP_PRINT_COMPILATION_STATUSES** before **include** statement
 or you can check them by yourself with **errorStatus** field.
+
 Example:
 ```c
 #define REGEXP_IMPLEMENTATION
