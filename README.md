@@ -174,6 +174,8 @@ int main(void) {
 
     RegExpResult result = RegExp_compile("word", &expression);
 
+    free(buffer);
+
     return 0;
 }
 ```

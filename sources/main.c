@@ -1,26 +1,25 @@
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
-#define REGEXP_PRINT_COMPILATION_STATUSES
+#define REGEXP_IMPLEMENTATION
 #include "RegExp.h"
 
-int main() {
-    char* str = "W2";
-
-    RegExp* expr = RegExp_create("W\\d?\\d?2$");
-    RegExp_printExpression(expr);
-    RegExpSearchHit hit;
-
-    int hits = RegExp_search(expr, str, &hit);
-
-    if(hits) {
-        printf("S: %zu, L: %zu\n", hit.start, hit.length);
-        printf("Match: '");
-        RegExp_printSearchHit(str, &hit);
-        printf("'\n");
-    } else {
-        printf("Miss\n");
+int main(void) {
+    char* regexp = "..dot..";
+    size_t patternsNumber = RegExp_patternsNumber(regexp);
+    if(patternsNumber == 0) {
+        printf("Got syntax error\n");
+        return 1;
     }
+    Pattern* buffer = malloc(sizeof(Pattern) * patternsNumber);
+    RegExp expression = {
+        .patternsBuffer = buffer,
+        .patternsBufferSize = patternsNumber,
+    };
+
+    RegExpResult result = RegExp_compile("word", &expression);
+
+    free(buffer);
 
     return 0;
 }
