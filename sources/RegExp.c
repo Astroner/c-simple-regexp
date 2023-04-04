@@ -85,7 +85,7 @@ static size_t identifyPattern(const char* regexp, Pattern* result) {
     return length;
 }
 
-static size_t getPatternsNumber(const char* regexp) {
+size_t RegExp_patternsNumber(const char* regexp) {
     size_t cursor = 0;
 
     size_t patternIndex = 0;
@@ -137,7 +137,7 @@ RegExpResult RegExp_compile(const char* regexp, RegExp* result) {
 }
 
 RegExp* RegExp_create(const char* regexp) {
-    size_t size = getPatternsNumber(regexp);
+    size_t size = RegExp_patternsNumber(regexp);
 
     if(!size) {
         #if defined(REGEXP_PRINT_COMPILATION_STATUSES) 

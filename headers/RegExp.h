@@ -69,6 +69,7 @@ typedef struct RegExpSearchHit {
     size_t length;
 } RegExpSearchHit; 
 
+size_t RegExp_patternsNumber(const char* regexp);
 RegExpResult RegExp_compile(const char* regexp, RegExp* result);
 RegExpResult RegExp_search(const RegExp* regexp, const char* str, RegExpSearchHit* result);
 void RegExp_printSearchHit(const char* string, const RegExpSearchHit* hit);

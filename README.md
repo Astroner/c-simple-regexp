@@ -69,7 +69,7 @@ int main(void) {
         } else if(expression->errorStatus == RegExpResultSyntaxError) {
             printf("Syntax Error\n");
         }
-        return -1;
+        return 1;
     }
 
     return 0;
@@ -103,7 +103,7 @@ int main(void) {
         }
 
         RegExp_free(expression);
-        return -1;
+        return 1;
     }
     // ...code
 
@@ -112,5 +112,70 @@ int main(void) {
     return 0;
 }
 ```
+
+### Manual way
+Basically to create **RegExp** you need to create buffer for patterns, assign it to the structure and compile it using **RegExp_compile()** function.
+
+You can do it in a static way:
+```c
+#include <stdio.h>
+
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
+
+#define BUFFER_SIZE 10
+
+int main(void) {
+    Pattern buffer[BUFFER_SIZE];
+    RegExp expression = {
+        .patternsBuffer = buffer,
+        .patternsBufferSize = BUFFER_SIZE,
+    };
+
+    RegExpResult result = RegExp_compile(&expression, "word");
+    
+    if(expression->errorStatus < 0) {
+        printf("Got error during the compilation: ");
+        if(expression->errorStatus == RegExpResultInsufficientSpace) {
+            printf("Insufficient Buffer Space\n");
+        } else if(expression->errorStatus == RegExpResultSyntaxError) {
+            printf("Syntax Error\n");
+        }
+        return 1;
+    }
+
+    return 0;
+}
+```
+Here you can control memory and etc on your own.
+
+If for some reasons you don't want to use **RegExp_create()** functions to create **RegExp** in the dynamic memory, then you also can do it in manual way.
+If you want to allocate precise amount of memory you can use **RegExp_patternsNumber()** function to get number of patterns in the regexp.
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+#define REGEXP_IMPLEMENTATION
+#include "RegExp.h"
+
+int main(void) {
+    char* regexp = "..dot..";
+    size_t patternsNumber = RegExp_patternsNumber(regexp);
+    if(patternsNumber == 0) {
+        printf("Got syntax error\n");
+        return 1;
+    }
+    Pattern* buffer = malloc(sizeof(Pattern) * patternsNumber);
+    RegExp expression = {
+        .patternsBuffer = buffer,
+        .patternsBufferSize = patternsNumber,
+    };
+
+    RegExpResult result = RegExp_compile(&expression, "word");
+
+    return 0;
+}
+```
+Interesting thing is that **RegExp_patternsNumber()** and **RegExp_compile()** actually uses the same pattern identification function under the hood, so if **RegExp_patternsNumber()** don't throw SyntaxError then **RegExp_compile()** also will not throw SyntaxError. Downside of this precise approach is that we need to go through the regexp string twice: to get length and to compile. We use this approach in **RegExp_create()** function, so it is always slower then **RegExp_createStatic()** even besides **malloc()** and **free()** calls.
 # Refs
  - [ASCII codes](https://www.cs.cmu.edu/~pattis/15-1XX/common/handouts/ascii.html)
