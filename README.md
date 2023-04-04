@@ -133,7 +133,7 @@ int main(void) {
         .patternsBufferSize = BUFFER_SIZE,
     };
 
-    RegExpResult result = RegExp_compile(&expression, "word");
+    RegExpResult result = RegExp_compile("word", &expression);
     
     if(expression.errorStatus < 0) {
         printf("Got error during the compilation: ");
@@ -172,7 +172,7 @@ int main(void) {
         .patternsBufferSize = patternsNumber,
     };
 
-    RegExpResult result = RegExp_compile(&expression, "word");
+    RegExpResult result = RegExp_compile("word", &expression);
 
     return 0;
 }
