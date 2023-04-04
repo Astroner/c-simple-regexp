@@ -212,6 +212,7 @@ void searchTests() {
     
     // TODO: Make it work
     // SEARCH_TEST("W\\d?\\d?2$", "W4322W2", "W2");
+    // SEARCH_TEST("W\\d?\\d?2$", "W2", "W2");
 }
 
 int main(void) {

@@ -415,7 +415,6 @@ void RegExp_printExpression(const RegExp* regexp) {
     }
     fprintf(stdout, "Minimal Possible Length: %zu\n", regexp->minPossibleLength);
     fprintf(stdout, "Patterns number: %zu; Buffer size: %zu\n", regexp->patternsActualSize, regexp->patternsBufferSize);
-    fprintf(stdout, "Patterns number: %zu; Buffer size: %zu\n", regexp->patternsActualSize, regexp->patternsBufferSize);
 }
 
 #endif // REGEXP_LIB_IMPLEMENTATION
